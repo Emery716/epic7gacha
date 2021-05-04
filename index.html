@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="zh_TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>七史隨機抽角器</title>
+    <!-- Bootstrap CSS -->
+    <!-- <link rel="stylesheet" href="./bootstrap-4.6.0-dist/css/bootstrap.min.css"> -->
+    <style>
+        body {
+            background-color: rgb(79, 79, 79);
+        }
+
+        .wrapper {
+            background-color: rgb(239, 239, 239);
+            margin: 0 auto;
+            width: 500px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+        }
+
+        #loading {
+            position: absolute;
+            left: 25%;
+            visibility: hidden;
+        }
+
+        .title {
+            font-size: 20pt;
+        }
+
+        .flexbox {
+            display: flex;
+        }
+
+        .filter {
+            flex-direction: row;
+            justify-content: center;
+            text-align: left;
+            padding: 0 0 40px 0;
+        }
+
+        .padding_x30 {
+            padding: 0 30px;
+        }
+
+        .btnWrapper {
+            display: flex;
+        }
+
+        #btnSubmit {
+            flex: 1;
+            font-size: 15pt;
+            padding: 20px 0;
+        }
+
+        #btnSaveHero {
+            flex: 1;
+            font-size: 15pt;
+            padding: 20px 0;
+        }
+
+        .filter_resultWrapper {
+            flex-direction: row;
+            justify-content: space-between;
+            padding: 15px 25px;
+            flex-wrap: wrap;
+        }
+
+        .resultWrapper {
+            flex-direction: row;
+            justify-content: center;
+            padding: 15px 25px;
+            flex-wrap: wrap;
+        }
+
+        #btnFilterResult {
+            margin-left: 10px;
+        }
+
+        #filterResult>div {
+            width: 25%;
+        }
+
+        #saveResult>div{
+            width: 25%;
+        }
+
+        
+    </style>
+</head>
+
+<body>
+    <div class="wrapper">
+        <div id="loading"><img src="/loading.gif" alt=""></div>
+        <div>
+            <p class="title">七史隨機抽角器</p>
+            <p>限制條件</p>
+        </div>
+        <div class="flexbox filter" id="filter">
+            <div class="padding_x30" id="filter_inputRarity">
+                <p>星等</p>
+                <input type="checkbox" name="inputRarity" value="3">3<br />
+                <input type="checkbox" name="inputRarity" value="4">4<br />
+                <input type="checkbox" name="inputRarity" value="5">5<br />
+            </div>
+            <div class="padding_x30" id="filter_inputAttribute">
+                <p>屬性</p>
+                <input type="checkbox" name="inputAttribute" value="fire">火<br />
+                <input type="checkbox" name="inputAttribute" value="ice">水<br />
+                <input type="checkbox" name="inputAttribute" value="wind">自然<br />
+                <input type="checkbox" name="inputAttribute" value="light">光<br />
+                <input type="checkbox" name="inputAttribute" value="dark">暗<br />
+            </div>
+            <div class="padding_x30" id="filter_inputRole">
+                <p>職業</p>
+                <input type="checkbox" name="inputRole" value="knight">騎士<br />
+                <input type="checkbox" name="inputRole" value="warrior">戰士<br />
+                <input type="checkbox" name="inputRole" value="assassin">盜賊<br />
+                <input type="checkbox" name="inputRole" value="ranger">射手<br />
+                <input type="checkbox" name="inputRole" value="mage">魔導士<br />
+                <input type="checkbox" name="inputRole" value="manauser">精靈師<br />
+            </div>
+        </div>
+        <div class="btnWrapper">
+            <button id="btnSubmit">隨機抽一個</button>
+            <button id="btnSaveHero">保留</button>
+        </div>
+
+        <div>
+            <p>抽選結果</p>
+            <div class="flexbox resultWrapper" id="existedResult">
+            </div>
+
+        </div>
+
+
+        <div>
+            <p>保留結果</p>
+            <div class="flexbox resultWrapper" id="saveResult">
+            </div>
+        </div>
+
+
+
+
+
+        <div>
+            <p>根據條件篩選結果<span id ="resultLength"></span><button id="btnFilterResult">顯示</button></p>
+
+            <div class="flexbox filter_resultWrapper" id="filterResult">
+            </div>
+        </div>
+
+
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="jquery-3.5.1.min.js"></script>
+    <!-- <script src="./bootstrap-4.6.0-dist/js/bootstrap.bundle.min.js"></script> -->
+    <script type="text/javascript">
+        var item = [];
+        var filterresult = [];
+        $(document).ready(function () {
+            //取得API資料
+            $.ajax({
+                url: "https://api.epicsevendb.com/hero?lang=zht",
+                type: 'GET',
+                contentType: 'application/json',
+                async: true,
+                success: function (res) {
+                    //取得資料存入變數
+                    item = res;
+                }
+            })
+
+            $('#btnSubmit').click(function () {
+                loading();
+                getSelected();
+                document.getElementById("btnSaveHero").disabled=false; 
+            });
+
+
+
+            $("#filterResult").hide();
+            $("#btnFilterResult").click(function () {
+                $("#filterResult").toggle();
+                if (this.innerHTML == '隱藏') {
+                    this.innerHTML = '顯示';
+                } else {
+                    this.innerHTML = '隱藏';
+                }
+
+            });
+
+            document.getElementById("btnSaveHero").disabled=true; 
+            $("#btnSaveHero").click(function () {
+                saveHeroResult(saveHero);
+                let parent = document.getElementById('existedResult');
+                //重置
+                parent.innerHTML = '';
+                document.getElementById("btnSaveHero").disabled=true; 
+
+            });
+
+
+        });
+
+        function loading() {
+            if ($('#loading').css('visibility') != 'visible') {
+                $('#loading').css('visibility', 'visible');
+            } else {
+                $('#loading').css('visibility', 'hidden');
+            }
+
+        }
+        /*---
+        輸入資訊 > 拷貝資訊 > 建立篩選條件
+        輸入拷貝資訊 > 遍歷拷貝資訊，挑出含篩選條件的資訊 > 存下篩選過資訊
+        篩選過資訊顯示在介面上
+        設定抽選條件
+        設定抽選人
+        根據抽選條件，從篩選過資訊抽取
+        被抽取到資訊顯示於介面
+        確認是否保留
+        若保留，將被抽取到資訊從 篩選過資訊名單移除
+        ----*/
+
+        //存放使用者有點擊的變數，有幾個篩選群組就弄幾個
+        //星級、屬性、職業
+        var filterRarity = [];
+        var filterAttribute = [];
+        var filterRole = [];
+        //建立篩選條件
+        //篩選群組html元素的id，用來判斷input是哪個篩選群組，要放進哪個變數
+        var filterList = ['#filter_inputRarity', '#filter_inputAttribute', '#filter_inputRole'];
+        function getSelected() {
+            //每次重新執行都要清空，才不會名單越加越多
+            //重置
+            filterRarity = [];
+            filterAttribute = [];
+            filterRole = [];
+            //依序取得所有篩選群組html元素的id
+            for (let i = 0; i < filterList.length; i++) {
+                //看篩選群組 i 裡面有沒有被點擊的
+                $(filterList[i] + " input:checked").each(function () {
+                    //判斷現在是哪個篩選群組
+                    if (filterList[i] == '#filter_inputRarity') {
+                        //把元素的值加入相對的存放變數
+                        filterRarity.push(this.value);
+                    } else if (filterList[i] == '#filter_inputAttribute') {
+                        filterAttribute.push(this.value);
+                    } else if (filterList[i] == '#filter_inputRole') {
+                        filterRole.push(this.value);
+                    }
+                });
+            }
+            // console.log('使用者選擇了星等');
+            // console.log(filterRarity);
+            // console.log('使用者選擇了屬性');
+            // console.log(filterAttribute);
+            // console.log('使用者選擇了職業');
+            // console.log(filterRole);
+
+            filterHero();
+        }
+
+
+        //根據篩選條件做篩選，取得篩選過後的名單
+        function filterHero() {
+            //用於存放篩選過的名單
+            //每次重新執行都要清空，才不會名單越加越多
+            let outputList = [];
+
+            //來源名單，複製所有名單給它
+            var soureList = item.results;
+            if (filterRarity.length != 0) {
+                //重置
+                outputList = [];
+                for (let i = 0; i < soureList.length; i++) {
+                    //從存放使用者有點擊的變數取得資料，和來源名單做比較
+                    //星等的陣列 = filterRarity
+                    for (let s = 0; s < filterRarity.length; s++) {
+                        if (filterRarity[s] == soureList[i].rarity) {
+                            //比較後相同的取出來存入變數
+                            outputList.push(soureList[i]);
+                        }
+                    }
+                    // console.log('篩過星等');
+                    // console.log(outputList);
+                }
+                //把得到的名單取代掉來源名單
+                soureList = outputList;
+            }
+            if (filterAttribute.length != 0) {
+                //重置
+                outputList = [];
+                for (let i = 0; i < soureList.length; i++) {
+                    //從存放使用者有點擊的變數取得資料，和來源名單做比較
+                    //屬性的陣列 = filterAttribute
+                    for (let s = 0; s < filterAttribute.length; s++) {
+                        if (filterAttribute[s] == soureList[i].attribute) {
+                            //比較後相同的取出來存入變數
+                            outputList.push(soureList[i]);
+                        }
+                    }
+                    // console.log('篩過屬性');
+                    // console.log(outputList);
+                }
+                //把得到的名單取代掉來源名單
+                soureList = outputList;
+                //為了新的篩選，把得到名單清空
+            }
+            if (filterRole.length != 0) {
+                //重置
+                outputList = [];
+                for (let i = 0; i < soureList.length; i++) {
+                    //從存放使用者有點擊的變數取得資料，和來源名單做比較
+                    //屬性的陣列 = filterRole
+                    for (let s = 0; s < filterRole.length; s++) {
+                        if (filterRole[s] == soureList[i].role) {
+                            //比較後相同的取出來存入變數
+                            outputList.push(soureList[i]);
+                        }
+                    }
+                    // console.log('篩過職業');
+                    // console.log(outputList);
+                }
+                //把得到的名單取代掉來源名單
+                soureList = outputList;
+            }
+
+            if (alreadySaveHero.length != 0) {
+                //重置
+                outputList = [];
+                for (let i = 0; i < soureList.length; i++) {
+                    //保留名單，和來源名單做比較
+                    //陣列 alreadySaveHero
+                    let x = 0;
+                    for (let s = 0; s < alreadySaveHero.length; s++) {
+                        if (alreadySaveHero[s].id != soureList[i].id) {
+                            x++;
+                            if (x == alreadySaveHero.length) {
+                                outputList.push(soureList[i]);
+                            }
+                        }
+                    }
+                    // console.log('篩過職業');
+                    // console.log(outputList);
+                }
+                //把得到的名單取代掉來源名單
+                if (outputList.length == 0) {
+                    alert('沒有英雄可以抽了喔!');
+                    return;
+                } else {
+                    soureList = outputList;
+                }
+            }
+
+            showfilterHero(soureList);
+
+        }
+
+        function showfilterHero(e) {
+            document.getElementById('resultLength').innerHTML = ' 共 ' + e.length + '人';
+            let parent = document.getElementById('filterResult');
+            //重置
+            parent.innerHTML = '';
+            for (let i = 0; i < e.length; i++) {
+                //新增 div
+                let div = document.createElement("div");
+                // //設定 div 屬性，如 id
+                // div.setAttribute("id", "newDiv");
+                div.innerHTML = '<img src="' + e[i].assets.icon + '" alt="">' + '<p>' + e[i].name + '</p>';
+                parent.appendChild(div);
+            }
+            existedHero(e);
+
+        }
+
+        var saveHero = [];
+        function existedHero(e) {
+            saveHero = [];
+            var hero = getRandomInt(e.length);
+            // console.log(e);
+            // console.log(e[hero]);
+            let parent = document.getElementById('existedResult');
+            //重置
+            parent.innerHTML = '';
+            //新增 div
+            let div = document.createElement("div");
+            // //設定 div 屬性，如 id
+            // div.setAttribute("id", "newDiv");
+            div.innerHTML = '<img src="' + e[hero].assets.icon + '" alt="">' + '<p>' + e[hero].name + '</p>';
+            parent.appendChild(div);
+            saveHero = e[hero];            
+            loading();
+        }
+
+        var alreadySaveHero = [];
+        function saveHeroResult(e) {
+            alreadySaveHero.push(e);
+            let parent = document.getElementById('saveResult');
+            //新增 div
+            let div = document.createElement("div");
+            // //設定 div 屬性，如 id
+            // div.setAttribute("id", "newDiv");
+            div.innerHTML = '<img src="' + e.assets.icon + '" alt="">' + '<p>' + e.name + '</p>';
+            parent.appendChild(div);
+
+        }
+
+        function getRandomInt(max) {
+            return Math.floor(Math.random() * max);
+        }
+
+
+
+    </script>
+
+
+
+
+</body>
+
+</html>
