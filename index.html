@@ -24,11 +24,6 @@
             position: relative;
         }
 
-        #loading {
-            position: absolute;
-            left: 25%;
-            visibility: hidden;
-        }
 
         .title {
             font-size: 20pt;
@@ -46,7 +41,7 @@
         }
 
         .padding_x30 {
-            padding: 0 30px;
+            padding: 0 8%;
         }
 
         .btnWrapper {
@@ -68,14 +63,14 @@
         .filter_resultWrapper {
             flex-direction: row;
             justify-content: space-between;
-            padding: 15px 25px;
+            padding: 15px 1%;
             flex-wrap: wrap;
         }
 
         .resultWrapper {
             flex-direction: row;
             justify-content: center;
-            padding: 15px 25px;
+            padding: 15px 1%;
             flex-wrap: wrap;
         }
 
@@ -97,7 +92,6 @@
 
 <body>
     <div class="wrapper">
-        <div id="loading"><img src="/loading.gif" alt=""></div>
         <div>
             <p class="title">七史隨機抽角器</p>
             <p>限制條件</p>
@@ -180,9 +174,8 @@
             })
 
             $('#btnSubmit').click(function () {
-                loading();
+                closeSaveBtn(false);
                 getSelected();
-                document.getElementById("btnSaveHero").disabled=false; 
             });
 
 
@@ -198,26 +191,26 @@
 
             });
 
-            document.getElementById("btnSaveHero").disabled=true; 
+            closeSaveBtn(true);
             $("#btnSaveHero").click(function () {
                 saveHeroResult(saveHero);
                 let parent = document.getElementById('existedResult');
                 //重置
                 parent.innerHTML = '';
-                document.getElementById("btnSaveHero").disabled=true; 
+                closeSaveBtn(true);
 
             });
 
 
         });
 
-        function loading() {
-            if ($('#loading').css('visibility') != 'visible') {
-                $('#loading').css('visibility', 'visible');
-            } else {
-                $('#loading').css('visibility', 'hidden');
-            }
 
+        function closeSaveBtn(e){
+            if(e){
+                document.getElementById("btnSaveHero").disabled=true; 
+            }else{
+                document.getElementById("btnSaveHero").disabled=false; 
+            }
         }
         /*---
         輸入資訊 > 拷貝資訊 > 建立篩選條件
@@ -353,9 +346,10 @@
                     // console.log('篩過職業');
                     // console.log(outputList);
                 }
-                //把得到的名單取代掉來源名單
+                //如果沒有名單可以用了
                 if (outputList.length == 0) {
                     alert('沒有英雄可以抽了喔!');
+                    closeSaveBtn(true);
                     return;
                 } else {
                     soureList = outputList;
@@ -399,7 +393,7 @@
             div.innerHTML = '<img src="' + e[hero].assets.icon + '" alt="">' + '<p>' + e[hero].name + '</p>';
             parent.appendChild(div);
             saveHero = e[hero];            
-            loading();
+
         }
 
         var alreadySaveHero = [];
